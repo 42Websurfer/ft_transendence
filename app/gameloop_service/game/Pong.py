@@ -402,6 +402,10 @@ class PongGame:
 	Some big and commonly used sends defined here to make code more readable
 	"""
 	def send_entity_move(self, entity):
+		for consumer in self.players:
+			asyncio.run_coroutine_threadsafe(consumer.send(text_data=f"up;{entity.id};{entity.position.x};{entity.position.y};{entity.rotation}"), self.event_loop)
+			# print(f"up;{entity.id};{entity.position.x};{entity.position.y};{entity.rotation}")
+		return
 		asyncio.run_coroutine_threadsafe(self.players[0].channel_layer.group_send(
 			self.players[0].group_name,
 			{
@@ -410,9 +414,10 @@ class PongGame:
 				'transform': entity.serialize()
 			}
 			),
-			self.event_loop)
+		self.event_loop)
 		
 	def send_entity_set_pos(self, entity):
+		# await self.send(text_data=f"sp;{event.get('id')};{transform['position']['x']};{transform['position']['y']};{transform['rotation']}")
 		asyncio.run_coroutine_threadsafe(self.players[0].channel_layer.group_send(
 			self.players[0].group_name,
 			{
