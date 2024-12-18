@@ -48,7 +48,7 @@ class Ball(Entity):
 		new_pos = Vector(self.position.x + x_add, self.position.y + y_add)
 		if self.position.x != new_pos.x or self.position.y != new_pos.y:
 			self.position = new_pos
-			thread_local.pong_game.send_entity_move(self)
+			asyncio.run_coroutine_threadsafe(thread_local.pong_game.send_entity_move(self), thread_local.event_loop)
 		
 class Player(Entity):
 	def __init__(self, x, y, height=250):
@@ -75,20 +75,12 @@ class Player(Entity):
 			if len > self.goal_height * 0.5 - self.mesh.height * 0.5:
 				return
 
-		# # Check if the mesh is still inside the canvas
-		# transformed_points = [p.dup().rotate(self.rotation).add(new_pos) for p in self.mesh.points]
-		# for point in transformed_points:
-		# 	if point.x < 0 or point.x > CANVAS_WIDTH:
-		# 		return
-		# 	if point.y < 0 or point.y > CANVAS_HEIGHT:
-		# 		return
 		if self.position.x != new_pos.x or self.position.y != new_pos.y:
 			self.position = new_pos
 			#send new position to everyone
-			thread_local.pong_game.send_entity_move(self)
+			asyncio.run_coroutine_threadsafe(thread_local.pong_game.send_entity_move(self), thread_local.event_loop)
 			
 	def increase_score(self):
-		print('Player', self.id, 'Scored')
 		self.score += 1
 		asyncio.run_coroutine_threadsafe(thread_local.host.channel_layer.group_send(
 			thread_local.host.group_name,
@@ -257,7 +249,7 @@ class GameLogicManager(Entity):
 				forward = forward.add(self.starter.position)
 				if self.ball.position.x != forward.x or self.ball.position.y != forward.y:
 					self.ball.set_pos(forward.x, forward.y)
-					thread_local.pong_game.send_entity_move(self.ball)
+					asyncio.run_coroutine_threadsafe(thread_local.pong_game.send_entity_move(self.ball), thread_local.event_loop)
 		if self.ball.physics.velocity.sqr_length() < pow(30, 2):
 			self.ball.physics.velocity.scale(1.0002)
 		#this check is to reset the round when the ball somehow escapes the play area
@@ -401,23 +393,11 @@ class PongGame:
 	"""
 	Some big and commonly used sends defined here to make code more readable
 	"""
-	def send_entity_move(self, entity):
+	async def send_entity_move(self, entity):
 		for consumer in self.players:
-			asyncio.run_coroutine_threadsafe(consumer.send(text_data=f"up;{entity.id};{entity.position.x};{entity.position.y};{entity.rotation}"), self.event_loop)
-			# print(f"up;{entity.id};{entity.position.x};{entity.position.y};{entity.rotation}")
-		return
-		asyncio.run_coroutine_threadsafe(self.players[0].channel_layer.group_send(
-			self.players[0].group_name,
-			{
-				'type': 'move_entity',
-				'id': entity.id,
-				'transform': entity.serialize()
-			}
-			),
-		self.event_loop)
+			await consumer.send(text_data=f"up;{entity.id};{entity.position.x};{entity.position.y};{entity.rotation}")
 		
 	def send_entity_set_pos(self, entity):
-		# await self.send(text_data=f"sp;{event.get('id')};{transform['position']['x']};{transform['position']['y']};{transform['rotation']}")
 		asyncio.run_coroutine_threadsafe(self.players[0].channel_layer.group_send(
 			self.players[0].group_name,
 			{
