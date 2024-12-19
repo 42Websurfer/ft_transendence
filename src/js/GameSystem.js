@@ -344,6 +344,8 @@ export class MovementSystem extends System{
 	}
 }
 
+const eps = 0.00001;
+
 export class Ray extends Plane {
 	constructor(start, dir) {
 		super(start, dir);
@@ -354,7 +356,6 @@ export class Ray extends Plane {
 		const end = this.start.add(this.dir);
 		if (debug)
 			drawLine(start, end, 'red');
-		const eps = 0.00001;
 		let points = [];
 		for (let ent of entities) {
 			const entMesh = ent.getComponent(Mesh);
@@ -369,11 +370,15 @@ export class Ray extends Plane {
 
 				const r = ((B.x - A.x) * (start.y - A.y) - (start.x - A.x) * (B.y - A.y)) / denominator;
 
-				if (r + eps < 0) continue;
+				if (r + eps < 0){
+					continue;
+				}
 
 				const s = ((A.x - start.x) * (end.y - start.y) - (end.x - start.x) * (A.y - start.y)) / denominator;
 
-				if (s + eps < 0 || s - eps > 1) continue;
+				if (s + eps < 0 || s - eps > 1){
+					continue;
+				}
 
 				points.push(new Vector(s * (B.x - A.x) + A.x, s * (B.y - A.y) + A.y));
 				if (debug)
@@ -382,6 +387,44 @@ export class Ray extends Plane {
 		}
 		points.sort((a, b) => a.sub(start).sqrLength() - b.sub(start).sqrLength());
 		return points;
+	}
+
+	castInfo(entities, debug = false) {
+		const start = this.start;
+		const end = this.start.add(this.dir);
+		if (debug)
+			drawLine(start, end, 'red');
+		let points = [];
+		for (let ent of entities) {
+			const entMesh = ent.getComponent(Mesh);
+			if (!entMesh)
+				continue;
+			let transformedPoints = entMesh.points.map(p => p.dup().rotate(ent.rotation).add(ent.position));
+			for (let i = 0; i < transformedPoints.length; i++) {
+				let A = transformedPoints[i];
+				let B = transformedPoints[(i + 1) % transformedPoints.length];
+	
+				const denominator = (end.x - start.x) * (B.y - A.y) - (B.x - A.x) * (end.y - start.y);
+
+				const r = ((B.x - A.x) * (start.y - A.y) - (start.x - A.x) * (B.y - A.y)) / denominator;
+
+				if (r + eps < 0){
+					continue;
+				}
+
+				const s = ((A.x - start.x) * (end.y - start.y) - (end.x - start.x) * (A.y - start.y)) / denominator;
+
+				if (s + eps < 0 || s - eps > 1){
+					continue;
+				}
+
+				points.push({hitPos: new Vector(s * (B.x - A.x) + A.x, s * (B.y - A.y) + A.y), entity: ent, plane: new Plane(A.dup(), B.sub(A))});
+				if (debug)
+					ctx.fillRect(points[points.length - 1].hitPos.x, points[points.length - 1].hitPos.y, 5, 5);
+			}
+		}
+		points.sort((a, b) => a.hitPos.sub(start).sqrLength() - b.hitPos.sub(start).sqrLength());
+		return points[0];
 	}
 }
 
