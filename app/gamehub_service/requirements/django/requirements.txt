@@ -1,6 +1,7 @@
 Django>=4.1,<5.0
 setuptools
-django 
+django
+django-prometheus
 psycopg2-binary
 whitenoise
 channels

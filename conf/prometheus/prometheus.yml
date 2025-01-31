@@ -13,3 +13,11 @@ scrape_configs:
   - job_name: 'postgresql'
     static_configs:
       - targets: ['postgres_exporter:9187']
+
+  - job_name: 'userservice'
+    static_configs:
+      - targets: ['user-service:8002']
+
+  - job_name: 'gamehubservice'
+    static_configs:
+      - targets: ['gamehub-service:8003']

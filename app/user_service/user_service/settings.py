@@ -32,6 +32,8 @@ ALLOWED_HOSTS = ['localhost', 'user-service', '10.13.9.6', '127.0.0.1', 'websurf
 
 # Application definition
 
+PROMETHEUS_METRIC_NAMESPACE = "userservice"
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -45,9 +47,11 @@ INSTALLED_APPS = [
     'django_otp.plugins.otp_totp',
     'rest_framework',
     'rest_framework_simplejwt',
+	'django_prometheus'
 ]
 
 MIDDLEWARE = [
+	'django_prometheus.middleware.PrometheusBeforeMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -57,6 +61,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django_otp.middleware.OTPMiddleware',
+	'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
 
 ROOT_URLCONF = 'user_service.urls'

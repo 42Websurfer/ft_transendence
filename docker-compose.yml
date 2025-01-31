@@ -188,7 +188,7 @@ services:
       - trans_net
   
   prometheus:
-    image: prom/prometheus:v2.21.0
+    image: prom/prometheus:latest
     container_name: prometheus
     expose: 
       - 9090
@@ -199,14 +199,16 @@ services:
       - trans_net
 
   grafana:
-    image: grafana/grafana:7.5.7
+    image: grafana/grafana:latest
     container_name: grafana
     expose:
       - 3000
     restart: unless-stopped
     volumes:
-      - ./conf/grafana:/etc/grafana/provisioning/datasources
-      - grafana-data:/var/lib/grafana
+      - ./conf/grafana/prometheus_ds.yml:/etc/grafana/provisioning/datasources/prometheus_ds.yml
+      - ./conf/grafana/dashboards:/var/lib/grafana/dashboards/
+      - ./conf/grafana/all.yml:/etc/grafana/provisioning/dashboards/all.yml
+      - grafana_data:/var/lib/grafana
     networks:
       - trans_net
 networks: 
@@ -217,4 +219,4 @@ volumes:
   postgres_data:
   redis_data:
   prometheus_data:
-  grafana-data:
+  grafana_data:
